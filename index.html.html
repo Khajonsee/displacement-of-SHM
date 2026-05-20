@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SHM Simulation — รูป 8.2 และ 8.3 | ครูสายเฟี้ยว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap"
+  rel="stylesheet"
+/>
+<style>
+  :root {
+    --navy-deep: #061a2e;
+    --navy: #0a2540;
+    --navy-soft: #14304f;
+    --teal: #1c7293;
+    --teal-light: #9dd5dc;
+    --gold: #d4af37;
+    --gold-light: #f2d98d;
+    --cream: #faf6ee;
+    --white: #ffffff;
+    --ink: #1a2332;
+    --ink-soft: #4a5568;
+    --red-hot: #c0392b;
+    --grid: #2a3f5c;
+
+    --font-thai: "Sarabun", "TH Sarabun New", system-ui, sans-serif;
+    --font-math: "Cormorant Garamond", "Georgia", serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    font-family: var(--font-thai);
+    background: radial-gradient(
+        ellipse at top right,
+        rgba(212, 175, 55, 0.08) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse at bottom left,
+        rgba(28, 114, 147, 0.12) 0%,
+        transparent 50%
+      ),
+      var(--navy-deep);
+    color: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Decorative noise/grain via SVG */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.92  0 0 0 0 0.84  0 0 0 0 0.65  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay;
+    opacity: 0.4;
+  }
+
+  .container {
+    position: relative;
+    z-index: 2;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 32px 60px;
+  }
+
+  /* ===== Header ===== */
+  header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  h1 {
+    font-family: var(--font-math);
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 44px);
+    color: var(--white);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+  h1 .accent {
+    color: var(--gold);
+    font-style: italic;
+  }
+  .subtitle {
+    font-size: 17px;
+    color: var(--teal-light);
+    margin-top: 4px;
+  }
+
+  /* ===== Tabs ===== */
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin: 24px 0 18px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+  }
+  .tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--teal-light);
+    font-family: var(--font-thai);
+    font-size: 18px;
+    font-weight: 600;
+    padding: 18px 24px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.25s ease;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .tab:hover {
+    color: var(--gold-light);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .tab.active {
+    color: var(--white);
+    border-bottom-color: var(--gold);
+  }
+  .tab-number {
+    font-family: var(--font-math);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--gold);
+    font-style: italic;
+    line-height: 1;
+  }
+  .tab-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .tab-label {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .tab.active .tab-label {
+    color: var(--gold-light);
+  }
+  .tab-title {
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  /* ===== Sim panel ===== */
+  .sim-panel {
+    display: none;
+  }
+  .sim-panel.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .sim-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 1024px) {
+    .sim-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .canvas-wrap {
+    background: linear-gradient(135deg, #0d1f33 0%, #061a2e 100%);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 4px;
+    padding: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    position: relative;
+  }
+  .canvas-wrap::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--gold);
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 2px;
+  }
+
+  /* ===== Side panel ===== */
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card {
+    background: rgba(20, 48, 79, 0.45);
+    border: 1px solid rgba(212, 175, 55, 0.18);
+    border-radius: 4px;
+    padding: 18px 20px;
+    backdrop-filter: blur(8px);
+  }
+  .card-title {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: "";
+    width: 16px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  /* Live readouts */
+  .readouts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+  }
+  .readout {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .readout-label {
+    font-size: 11px;
+    color: var(--teal-light);
+    font-family: var(--font-math);
+    font-style: italic;
+  }
+  .readout-value {
+    font-family: var(--font-math);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold-light);
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .readout-unit {
+    font-size: 13px;
+    color: var(--teal-light);
+    font-family: var(--font-thai);
+    margin-left: 4px;
+    font-weight: 400;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .btn-row {
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    flex: 1;
+    background: var(--navy);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: var(--cream);
+    font-family: var(--font-thai);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn:hover {
+    background: var(--navy-soft);
+    border-color: var(--gold);
+  }
+  .btn.primary {
+    background: var(--gold);
+    color: var(--navy);
+    border-color: var(--gold);
+  }
+  .btn.primary:hover {
+    background: var(--gold-light);
+  }
+  .btn-icon {
+    font-size: 12px;
+  }
+
+  .slider-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--cream);
+  }
+  .slider-label-name {
+    color: var(--teal-light);
+  }
+  .slider-label-value {
+    font-family: var(--font-math);
+    font-weight: 700;
+    color: var(--gold-light);
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 3px;
+    background: rgba(212, 175, 55, 0.25);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--gold);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--gold);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+  }
+
+  /* Notes card */
+  .note-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .note-list li {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--cream);
+    padding-left: 20px;
+    position: relative;
+  }
+  .note-list li::before {
+    content: "›";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--gold);
+    font-family: var(--font-math);
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .note-list b {
+    color: var(--gold-light);
+    font-weight: 700;
+  }
+  .formula {
+    font-family: var(--font-math);
+    font-style: italic;
+    color: var(--gold-light);
+    font-weight: 600;
+  }
+
+  /* Toggle switches */
+  .toggle-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--cream);
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle input {
+    display: none;
+  }
+  .toggle-track {
+    width: 36px;
+    height: 18px;
+    background: rgba(212, 175, 55, 0.2);
+    border-radius: 9px;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .toggle-track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: var(--cream);
+    border-radius: 50%;
+    transition: left 0.2s;
+  }
+  .toggle input:checked + .toggle-track {
+    background: var(--gold);
+  }
+  .toggle input:checked + .toggle-track::after {
+    left: 20px;
+    background: var(--navy);
+  }
+
+  /* Equation banner */
+  .eq-banner {
+    background: linear-gradient(
+      135deg,
+      var(--gold) 0%,
+      var(--gold-light) 100%
+    );
+    color: var(--navy);
+    padding: 16px 20px;
+    border-radius: 4px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.25);
+  }
+  .eq-banner .eq {
+    font-family: var(--font-math);
+    font-style: italic;
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: 0.5px;
+  }
+  .eq-banner .eq-caption {
+    font-size: 12px;
+    color: var(--navy-deep);
+    margin-top: 4px;
+    font-weight: 600;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 50px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(212, 175, 55, 0.18);
+    font-size: 12.5px;
+    color: var(--teal-light);
+    text-align: center;
+    font-style: italic;
+  }
+  footer .sig {
+    color: var(--gold);
+    font-weight: 600;
+    font-style: normal;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">Physics Vol. 3  •  Chapter 8  •  Section 8.2</div>
+    <h1>การเคลื่อนที่แบบ <span class="accent">Simple Harmonic Motion</span></h1>
+    <p class="subtitle">การจำลองเชิงโต้ตอบ — เห็นการเคลื่อนไหวของหมุดและเงาในเวลาเดียวกัน</p>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="sim1" role="tab" aria-selected="true">
+      <div class="tab-number">8.2</div>
+      <div class="tab-text">
+        <span class="tab-label">FIGURE</span>
+        <span class="tab-title">เงาของหมุดบนฉาก</span>
+      </div>
+    </button>
+    <button class="tab" data-tab="sim2" role="tab" aria-selected="false">
+      <div class="tab-number">8.3</div>
+      <div class="tab-text">
+        <span class="tab-label">FIGURE</span>
+        <span class="tab-title">หมุด · เงา · กราฟ การกระจัด – เวลา</span>
+      </div>
+    </button>
+  </nav>
+
+  <!-- ============== SIM 1 : Figure 8.2 ============== -->
+  <section class="sim-panel active" id="sim1">
+    <div class="sim-grid">
+
+      <div class="canvas-wrap">
+        <canvas id="canvas1" width="900" height="640"></canvas>
+      </div>
+
+      <aside class="side-panel">
+
+        <div class="card">
+          <div class="card-title">Live readout</div>
+          <div class="readouts">
+            <div class="readout">
+              <span class="readout-label">เวลา · t</span>
+              <span class="readout-value"><span id="r1-t">0.00</span><span class="readout-unit">s</span></span>
+            </div>
+            <div class="readout">
+              <span class="readout-label">มุม · θ</span>
+              <span class="readout-value"><span id="r1-theta">0</span><span class="readout-unit">°</span></span>
+            </div>
+            <div class="readout">
+              <span class="readout-label">ตำแหน่งหมุด</span>
+              <span class="readout-value" id="r1-pegname" style="font-size:20px;">a</span>
+            </div>
+            <div class="readout">
+              <span class="readout-label">เงาบนฉาก · x</span>
+              <span class="readout-value"><span id="r1-x">0.00</span><span class="readout-unit">A</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Controls</div>
+          <div class="controls">
+            <div class="btn-row">
+              <button class="btn primary" id="btn1-play">▶  เล่น</button>
+              <button class="btn" id="btn1-reset">↺  เริ่มใหม่</button>
+            </div>
+            <div class="slider-block">
+              <div class="slider-label">
+                <span class="slider-label-name">ความเร็ว (ω)</span>
+                <span class="slider-label-value" id="lbl1-speed">1.0×</span>
+              </div>
+              <input type="range" id="speed1" min="0.2" max="2.5" step="0.1" value="1.0" />
+            </div>
+            <div class="toggle-row">
+              <label class="toggle">
+                <span>แสดงเส้นแสง (จากหมุดถึงฉาก)</span>
+                <input type="checkbox" id="t1-rays" checked />
+                <span class="toggle-track"></span>
+              </label>
+              <label class="toggle">
+                <span>แสดงร่องรอยของเงา</span>
+                <input type="checkbox" id="t1-trail" checked />
+                <span class="toggle-track"></span>
+              </label>
+              <label class="toggle">
+                <span>โหมดทีละเฟรม (8 ตำแหน่ง)</span>
+                <input type="checkbox" id="t1-step" />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">สิ่งที่ต้องสังเกต</div>
+          <ul class="note-list">
+            <li>หมุดเคลื่อนที่บนวงกลมด้วยอัตราเร็วเชิงมุม <b class="formula">ω</b> คงที่</li>
+            <li>แต่ <b>เงา</b> บนฉากเคลื่อนที่ <b>ช้า</b> ที่ขอบ และ <b>เร็วที่สุด</b> ที่จุดสมดุล</li>
+            <li>เงาเคลื่อนที่กลับไป-กลับมาผ่านจุด <b class="formula">x = 0</b> นี่คือ <b>SHM</b></li>
+          </ul>
+        </div>
+
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============== SIM 2 : Figure 8.3 ============== -->
+  <section class="sim-panel" id="sim2">
+    <div class="sim-grid">
+
+      <div class="canvas-wrap">
+        <canvas id="canvas2" width="900" height="640"></canvas>
+      </div>
+
+      <aside class="side-panel">
+
+        <div class="eq-banner">
+          <div class="eq">x = A sin(ωt + φ)</div>
+          <div class="eq-caption">สมการการกระจัดของ SHM</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Live readout</div>
+          <div class="readouts">
+            <div class="readout">
+              <span class="readout-label">เวลา · t</span>
+              <span class="readout-value"><span id="r2-t">0.00</span><span class="readout-unit">s</span></span>
+            </div>
+            <div class="readout">
+              <span class="readout-label">มุมเฟส · ωt+φ</span>
+              <span class="readout-value"><span id="r2-phase">0</span><span class="readout-unit">°</span></span>
+            </div>
+            <div class="readout">
+              <span class="readout-label">การกระจัด · x</span>
+              <span class="readout-value"><span id="r2-x">0.00</span><span class="readout-unit">A</span></span>
+            </div>
+            <div class="readout">
+              <span class="readout-label">รอบ</span>
+              <span class="readout-value" id="r2-cycle">0.0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Controls</div>
+          <div class="controls">
+            <div class="btn-row">
+              <button class="btn primary" id="btn2-play">▶  เล่น</button>
+              <button class="btn" id="btn2-reset">↺  เริ่มใหม่</button>
+            </div>
+            <div class="slider-block">
+              <div class="slider-label">
+                <span class="slider-label-name">ความเร็ว (ω)</span>
+                <span class="slider-label-value" id="lbl2-speed">1.0×</span>
+              </div>
+              <input type="range" id="speed2" min="0.2" max="2.5" step="0.1" value="1.0" />
+            </div>
+            <div class="slider-block">
+              <div class="slider-label">
+                <span class="slider-label-name">เฟสเริ่มต้น (φ)</span>
+                <span class="slider-label-value" id="lbl2-phi">0°</span>
+              </div>
+              <input type="range" id="phi2" min="0" max="360" step="15" value="0" />
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">เชื่อมโยงสามภาพ</div>
+          <ul class="note-list">
+            <li><b style="color:var(--red-hot)">●</b> หมุดบนวงกลม &mdash; มุม <span class="formula">ωt + φ</span></li>
+            <li><b style="color:var(--gold)">●</b> เงาบนแกน x &mdash; <span class="formula">x = A sin(ωt + φ)</span></li>
+            <li><b style="color:var(--teal-light)">━</b> กราฟ x-t วาดออกมาตามจริง</li>
+            <li>เส้นประแนวนอนแสดงว่า <b>ค่า x ทั้งสองภาพคือค่าเดียวกัน</b></li>
+          </ul>
+        </div>
+
+      </aside>
+    </div>
+  </section>
+
+  <footer>
+    SHM Interactive Simulation  ·  ฟิสิกส์ เล่ม 3 บทที่ 8  ·
+    <span class="sig">ครูสายเฟี้ยว — โรงเรียนลองวิทยา จังหวัดแพร่</span>
+  </footer>
+
+</div>
+
+<script>
+// ====================================================================
+// Shared utilities
+// ====================================================================
+const TAU = Math.PI * 2;
+
+function setupHiDPICanvas(canvas) {
+  const ctx = canvas.getContext("2d");
+  const ratio = window.devicePixelRatio || 1;
+  // Logical width/height come from the canvas's width/height attributes.
+  // Multiply by ratio for sharpness on retina.
+  const logicalW = canvas.width;
+  const logicalH = canvas.height;
+  canvas.width = logicalW * ratio;
+  canvas.height = logicalH * ratio;
+  canvas.style.aspectRatio = `${logicalW} / ${logicalH}`;
+  ctx.scale(ratio, ratio);
+  // Expose logical size for drawing
+  canvas._lw = logicalW;
+  canvas._lh = logicalH;
+  return ctx;
+}
+
+// Tab switching
+document.querySelectorAll(".tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach((b) => {
+      b.classList.remove("active");
+      b.setAttribute("aria-selected", "false");
+    });
+    document.querySelectorAll(".sim-panel").forEach((p) =>
+      p.classList.remove("active")
+    );
+    btn.classList.add("active");
+    btn.setAttribute("aria-selected", "true");
+    document.getElementById(btn.dataset.tab).classList.add("active");
+  });
+});
+
+// ====================================================================
+// SIMULATION 1 — Figure 8.2  (peg on disc + shadow on screen)
+// ====================================================================
+(function () {
+  const canvas = document.getElementById("canvas1");
+  const ctx = setupHiDPICanvas(canvas);
+  const W = canvas._lw, H = canvas._lh;
+
+  // Layout
+  const cx = W * 0.5;
+  const cy = H * 0.42;
+  const R = Math.min(W, H) * 0.22; // disc radius
+  const pegR = 12;
+  const screenY = H - 70;
+  const lightBarY = 25;
+
+  // State
+  let theta = -Math.PI / 2; // start at top (peg "a")
+  let speedMul = 1.0;
+  const baseOmega = 0.6; // rad/s at speed 1.0
+  let lastT = performance.now();
+  let elapsed = 0; // seconds
+  let playing = true;
+  let trail = [];
+  let showRays = true;
+  let showTrail = true;
+  let stepMode = false;
+
+  // Peg names following Thai textbook orientation: a top, b upper-right, c right, d lower-right, e bottom, f lower-left, g left, h upper-left
+  // angle 0 at +x (right), CCW positive.  Position labels by absolute angle:
+  // a = -π/2 (top), b = -π/4, c = 0, d = π/4, e = π/2 (bottom), f = 3π/4, g = π, h = -3π/4
+  function pegNameFromTheta(t) {
+    // Normalize to [-π, π]
+    let a = ((t + Math.PI) % TAU + TAU) % TAU - Math.PI;
+    const arr = [
+      { name: "a", a: -Math.PI / 2 },
+      { name: "b", a: -Math.PI / 4 },
+      { name: "c", a: 0 },
+      { name: "d", a: Math.PI / 4 },
+      { name: "e", a: Math.PI / 2 },
+      { name: "f", a: 3 * Math.PI / 4 },
+      { name: "g", a: Math.PI },
+      { name: "h", a: -3 * Math.PI / 4 }
+    ];
+    // Find which segment we're in (split disc into 8 arcs centered on each peg)
+    let best = arr[0], bestDiff = Infinity;
+    for (const p of arr) {
+      let d = Math.abs(a - p.a);
+      if (d > Math.PI) d = TAU - d;
+      if (d < bestDiff) { bestDiff = d; best = p; }
+    }
+    return best.name;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // ===== Background subtle grid =====
+    ctx.strokeStyle = "rgba(212,175,55,0.04)";
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx <= W; gx += 40) {
+      ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+    }
+
+    // ===== Light bar (top) =====
+    const lightGrad = ctx.createLinearGradient(0, lightBarY, 0, lightBarY + 16);
+    lightGrad.addColorStop(0, "#f2d98d");
+    lightGrad.addColorStop(1, "#d4af37");
+    ctx.fillStyle = lightGrad;
+    ctx.fillRect(60, lightBarY, W - 120, 14);
+    ctx.font = "italic 13px 'Cormorant Garamond', Georgia";
+    ctx.fillStyle = "#9dd5dc";
+    ctx.textAlign = "left";
+    ctx.fillText("light source — แผงโคมไฟ", 60, lightBarY - 6);
+
+    // Light rays (subtle vertical hints across the bar)
+    ctx.strokeStyle = "rgba(242,217,141,0.10)";
+    ctx.lineWidth = 1;
+    for (let lx = 80; lx < W - 80; lx += 30) {
+      ctx.beginPath();
+      ctx.moveTo(lx, lightBarY + 14);
+      ctx.lineTo(lx, screenY);
+      ctx.stroke();
+    }
+
+    // ===== Disc =====
+    // outer ring glow
+    const discGrad = ctx.createRadialGradient(cx, cy, R * 0.3, cx, cy, R * 1.2);
+    discGrad.addColorStop(0, "rgba(242,217,141,0.25)");
+    discGrad.addColorStop(0.7, "rgba(242,217,141,0.08)");
+    discGrad.addColorStop(1, "rgba(242,217,141,0)");
+    ctx.fillStyle = discGrad;
+    ctx.beginPath(); ctx.arc(cx, cy, R * 1.2, 0, TAU); ctx.fill();
+
+    // disc face
+    ctx.fillStyle = "rgba(242,217,141,0.16)";
+    ctx.strokeStyle = "#9dd5dc";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill(); ctx.stroke();
+
+    // Mark 8 reference peg positions (faint) for student to relate to figure 8.2
+    const refPegs = [
+      { a: -Math.PI / 2, n: "a" },
+      { a: -Math.PI / 4, n: "b" },
+      { a: 0, n: "c" },
+      { a: Math.PI / 4, n: "d" },
+      { a: Math.PI / 2, n: "e" },
+      { a: 3 * Math.PI / 4, n: "f" },
+      { a: Math.PI, n: "g" },
+      { a: -3 * Math.PI / 4, n: "h" }
+    ];
+    refPegs.forEach((p) => {
+      const px = cx + R * Math.cos(p.a);
+      const py = cy + R * Math.sin(p.a);
+      ctx.fillStyle = "rgba(157,213,220,0.5)";
+      ctx.beginPath(); ctx.arc(px, py, 4, 0, TAU); ctx.fill();
+      // Label outside
+      const lx = cx + (R + 22) * Math.cos(p.a);
+      const ly = cy + (R + 22) * Math.sin(p.a);
+      ctx.font = "italic bold 14px 'Cormorant Garamond', Georgia";
+      ctx.fillStyle = "rgba(157,213,220,0.7)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(p.n, lx, ly);
+    });
+
+    // Center
+    ctx.fillStyle = "#0a2540";
+    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, TAU); ctx.fill();
+
+    // Rotation arrow (ω indicator) - small curved arc with arrow
+    ctx.strokeStyle = "rgba(212,175,55,0.7)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 22, -Math.PI * 0.85, -Math.PI * 0.35);
+    ctx.stroke();
+    // Arrow head
+    const ahx = cx + 22 * Math.cos(-Math.PI * 0.35);
+    const ahy = cy + 22 * Math.sin(-Math.PI * 0.35);
+    ctx.fillStyle = "#d4af37";
+    ctx.beginPath();
+    ctx.moveTo(ahx, ahy);
+    ctx.lineTo(ahx - 6, ahy - 5);
+    ctx.lineTo(ahx - 1, ahy + 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#d4af37";
+    ctx.font = "italic bold 18px 'Cormorant Garamond', Georgia";
+    ctx.textAlign = "center";
+    ctx.fillText("ω", cx, cy + 14);
+
+    // ===== Current peg position =====
+    const px = cx + R * Math.cos(theta);
+    const py = cy + R * Math.sin(theta);
+
+    // Light ray (peg to screen)
+    if (showRays) {
+      ctx.strokeStyle = "rgba(242,217,141,0.6)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 6]);
+      ctx.beginPath();
+      ctx.moveTo(px, lightBarY + 14);
+      ctx.lineTo(px, screenY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // ===== Screen =====
+    const screenGrad = ctx.createLinearGradient(0, screenY, 0, screenY + 8);
+    screenGrad.addColorStop(0, "#1c7293");
+    screenGrad.addColorStop(1, "#0a2540");
+    ctx.fillStyle = screenGrad;
+    ctx.fillRect(60, screenY, W - 120, 8);
+    ctx.font = "13px 'Sarabun', sans-serif";
+    ctx.fillStyle = "#9dd5dc";
+    ctx.textAlign = "right";
+    ctx.fillText("ฉาก", W - 70, screenY + 30);
+
+    // Screen tick marks (-A, 0, +A relative to disc center cx)
+    ctx.strokeStyle = "rgba(157,213,220,0.4)";
+    ctx.lineWidth = 1;
+    const ticks = [
+      { x: cx - R, label: "−A" },
+      { x: cx, label: "0" },
+      { x: cx + R, label: "+A" }
+    ];
+    ticks.forEach((t) => {
+      ctx.beginPath();
+      ctx.moveTo(t.x, screenY);
+      ctx.lineTo(t.x, screenY + 14);
+      ctx.stroke();
+      ctx.font = "italic 13px 'Cormorant Garamond', Georgia";
+      ctx.fillStyle = "rgba(157,213,220,0.85)";
+      ctx.textAlign = "center";
+      ctx.fillText(t.label, t.x, screenY + 30);
+    });
+
+    // ===== Trail of shadow =====
+    if (showTrail) {
+      ctx.save();
+      trail.forEach((tr, i) => {
+        const age = (trail.length - i) / trail.length;
+        ctx.fillStyle = `rgba(212,175,55,${0.05 + 0.25 * (1 - age)})`;
+        ctx.beginPath();
+        ctx.arc(tr.x, screenY + 4, 6 - age * 3, 0, TAU);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    // ===== Shadow (current) =====
+    // Glow halo
+    const halo = ctx.createRadialGradient(px, screenY + 4, 0, px, screenY + 4, 24);
+    halo.addColorStop(0, "rgba(192,57,43,0.6)");
+    halo.addColorStop(1, "rgba(192,57,43,0)");
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(px, screenY + 4, 24, 0, TAU); ctx.fill();
+
+    // Actual shadow
+    ctx.fillStyle = "#c0392b";
+    ctx.beginPath();
+    ctx.ellipse(px, screenY + 4, 11, 5, 0, 0, TAU);
+    ctx.fill();
+
+    // ===== Peg (rendered last to sit on top) =====
+    // Peg shadow on disc face
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.beginPath(); ctx.arc(px + 2, py + 3, pegR, 0, TAU); ctx.fill();
+    // Peg body
+    const pegGrad = ctx.createRadialGradient(px - 3, py - 3, 2, px, py, pegR);
+    pegGrad.addColorStop(0, "#ff6b5b");
+    pegGrad.addColorStop(1, "#a0291b");
+    ctx.fillStyle = pegGrad;
+    ctx.beginPath(); ctx.arc(px, py, pegR, 0, TAU); ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Peg label
+    ctx.font = "bold 13px 'Sarabun', sans-serif";
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "left";
+    ctx.fillText("หมุด", px + pegR + 6, py - 6);
+    ctx.font = "italic 13px 'Cormorant Garamond', Georgia";
+    ctx.fillStyle = "#f2d98d";
+    ctx.fillText("(" + pegNameFromTheta(theta) + ")", px + pegR + 6, py + 10);
+
+    // Shadow label
+    ctx.font = "bold 12px 'Sarabun', sans-serif";
+    ctx.fillStyle = "#c0392b";
+    ctx.textAlign = "center";
+    ctx.fillText("เงา", px, screenY + 50);
+  }
+
+  function tick(now) {
+    const dt = Math.min(0.05, (now - lastT) / 1000); // cap to avoid jumps
+    lastT = now;
+    if (playing) {
+      if (stepMode) {
+        // Animate step by step: snap to 8 positions, pause briefly between
+        const stepIdx = Math.floor(((elapsed * speedMul) % 8));
+        const targetAngle = -Math.PI / 2 + (stepIdx / 8) * TAU;
+        // Smoothly approach
+        const da = targetAngle - theta;
+        let d = ((da + Math.PI) % TAU + TAU) % TAU - Math.PI;
+        theta += d * 0.15;
+        elapsed += dt;
+      } else {
+        theta += baseOmega * speedMul * dt;
+      }
+      // Wrap theta
+      theta = ((theta + Math.PI) % TAU + TAU) % TAU - Math.PI;
+
+      // Update trail
+      const px = cx + R * Math.cos(theta);
+      trail.push({ x: px });
+      if (trail.length > 60) trail.shift();
+
+      // Update readouts (every frame OK since values change smoothly)
+      const tSec = elapsed * speedMul;
+      const angDeg = (((theta + Math.PI / 2) * 180 / Math.PI) % 360 + 360) % 360;
+      document.getElementById("r1-t").textContent = (elapsed).toFixed(2);
+      document.getElementById("r1-theta").textContent = angDeg.toFixed(0);
+      document.getElementById("r1-pegname").textContent = pegNameFromTheta(theta);
+      // x relative to disc center, normalized by R
+      const xVal = Math.cos(theta);
+      document.getElementById("r1-x").textContent = (xVal > 0 ? "+" : "") + xVal.toFixed(2);
+      elapsed += dt;
+    }
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  // Controls
+  document.getElementById("btn1-play").addEventListener("click", (e) => {
+    playing = !playing;
+    e.target.textContent = playing ? "▌▌  หยุดชั่วคราว" : "▶  เล่น";
+    e.target.classList.toggle("primary", !playing);
+  });
+  document.getElementById("btn1-reset").addEventListener("click", () => {
+    theta = -Math.PI / 2;
+    elapsed = 0;
+    trail = [];
+  });
+  document.getElementById("speed1").addEventListener("input", (e) => {
+    speedMul = parseFloat(e.target.value);
+    document.getElementById("lbl1-speed").textContent = speedMul.toFixed(1) + "×";
+  });
+  document.getElementById("t1-rays").addEventListener("change", (e) => {
+    showRays = e.target.checked;
+  });
+  document.getElementById("t1-trail").addEventListener("change", (e) => {
+    showTrail = e.target.checked;
+    if (!showTrail) trail = [];
+  });
+  document.getElementById("t1-step").addEventListener("change", (e) => {
+    stepMode = e.target.checked;
+  });
+
+  // Start
+  lastT = performance.now();
+  requestAnimationFrame(tick);
+})();
+
+// ====================================================================
+// SIMULATION 2 — Figure 8.3  (peg + projection + x-t graph)
+// ====================================================================
+(function () {
+  const canvas = document.getElementById("canvas2");
+  const ctx = setupHiDPICanvas(canvas);
+  const W = canvas._lw, H = canvas._lh;
+
+  // Layout:
+  //   Left half:  rotating disc with peg, x-axis going horizontal through center
+  //   Right half: x-t graph that scrolls left as time advances
+  const splitX = W * 0.42;
+
+  // Disc (left)
+  const dcx = W * 0.21;
+  const dcy = H * 0.45;
+  const R = Math.min(W, H) * 0.20;
+
+  // Graph (right) - drawn relative to center vertical of axis
+  const gxLeft = splitX + 30;
+  const gxRight = W - 30;
+  const gyMid = dcy; // align with disc center
+  const gAmp = R; // matches disc radius so amplitude is visually identical
+  const gPeriodPx = (gxRight - gxLeft) / 2.5; // show ~2.5 cycles
+
+  // State
+  let theta = 0; // start so peg at +x (so x = +A initially) for visual clarity
+  let phi = 0;
+  let speedMul = 1.0;
+  const baseOmega = 0.5;
+  let lastT = performance.now();
+  let elapsed = 0;
+  let playing = true;
+  let trace = []; // points {t, x}
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Subtle vertical separator
+    ctx.strokeStyle = "rgba(212,175,55,0.15)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 6]);
+    ctx.beginPath();
+    ctx.moveTo(splitX, 30);
+    ctx.lineTo(splitX, H - 30);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ====== Left side: disc + axis ======
+
+    // Horizontal axis through disc center, extends to splitX
+    ctx.strokeStyle = "rgba(157,213,220,0.5)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(20, dcy);
+    ctx.lineTo(splitX, dcy);
+    ctx.stroke();
+
+    // Tick marks -A, 0, +A
+    const ticks = [
+      { x: dcx - R, label: "−A" },
+      { x: dcx, label: "0" },
+      { x: dcx + R, label: "+A" }
+    ];
+    ctx.font = "italic 13px 'Cormorant Garamond', Georgia";
+    ctx.fillStyle = "rgba(157,213,220,0.85)";
+    ctx.textAlign = "center";
+    ticks.forEach((t) => {
+      ctx.strokeStyle = "rgba(157,213,220,0.6)";
+      ctx.beginPath();
+      ctx.moveTo(t.x, dcy - 5); ctx.lineTo(t.x, dcy + 5);
+      ctx.stroke();
+      ctx.fillText(t.label, t.x, dcy + 22);
+    });
+
+    // Disc circle
+    ctx.fillStyle = "rgba(242,217,141,0.12)";
+    ctx.strokeStyle = "#9dd5dc";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(dcx, dcy, R, 0, TAU); ctx.fill(); ctx.stroke();
+
+    // Center
+    ctx.fillStyle = "#0a2540";
+    ctx.beginPath(); ctx.arc(dcx, dcy, 4, 0, TAU); ctx.fill();
+
+    // ω indicator
+    ctx.strokeStyle = "rgba(212,175,55,0.7)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(dcx, dcy, 22, Math.PI * 1.15, Math.PI * 1.65);
+    ctx.stroke();
+    ctx.fillStyle = "#d4af37";
+    ctx.font = "italic bold 18px 'Cormorant Garamond', Georgia";
+    ctx.textAlign = "center";
+    ctx.fillText("ω", dcx, dcy + 35);
+
+    // ===== Peg position =====
+    // We want positive x value to map to peg on the right (cos)
+    // x = A sin(ωt + φ) — peg should rotate so its horizontal projection matches
+    // We use angle = ωt + φ measured from +x axis (so x = R cos(angle))
+    // But conventionally x = A sin(ωt+φ). To match, set angle from +y axis instead.
+    // Easier: let peg angle = angle, then x_normalized = sin(angle).
+    // Render peg at (dcx + R*sin(angle), dcy - R*cos(angle)) so angle=0 puts peg at top, angle=π/2 puts at right (x=+A).
+    const ang = theta + phi;
+    const ppx = dcx + R * Math.sin(ang);
+    const ppy = dcy - R * Math.cos(ang);
+
+    // Radius vector (gold)
+    ctx.strokeStyle = "rgba(212,175,55,0.85)";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(dcx, dcy);
+    ctx.lineTo(ppx, ppy);
+    ctx.stroke();
+
+    // "A" label on the radius
+    const midX = (dcx + ppx) / 2;
+    const midY = (dcy + ppy) / 2;
+    ctx.font = "italic bold 16px 'Cormorant Garamond', Georgia";
+    ctx.fillStyle = "#f2d98d";
+    ctx.textAlign = "center";
+    // Offset label perpendicular to radius
+    const perpAng = ang;
+    const offX = -8 * Math.cos(perpAng);
+    const offY = -8 * Math.sin(perpAng);
+    ctx.fillText("A", midX + offX, midY + offY);
+
+    // Vertical projection line peg → x-axis (dashed)
+    ctx.strokeStyle = "rgba(192,57,43,0.6)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 5]);
+    ctx.beginPath();
+    ctx.moveTo(ppx, ppy);
+    ctx.lineTo(ppx, dcy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Shadow on the x-axis
+    const halo = ctx.createRadialGradient(ppx, dcy, 0, ppx, dcy, 20);
+    halo.addColorStop(0, "rgba(212,175,55,0.6)");
+    halo.addColorStop(1, "rgba(212,175,55,0)");
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(ppx, dcy, 20, 0, TAU); ctx.fill();
+    ctx.fillStyle = "#d4af37";
+    ctx.beginPath(); ctx.arc(ppx, dcy, 7, 0, TAU); ctx.fill();
+    ctx.fillStyle = "#0a2540";
+    ctx.font = "italic bold 12px 'Cormorant Garamond', Georgia";
+    ctx.textAlign = "center";
+    ctx.fillText("x", ppx, dcy + 4);
+
+    // Peg
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.beginPath(); ctx.arc(ppx + 2, ppy + 2, 11, 0, TAU); ctx.fill();
+    const pegGrad = ctx.createRadialGradient(ppx - 3, ppy - 3, 2, ppx, ppy, 11);
+    pegGrad.addColorStop(0, "#ff6b5b");
+    pegGrad.addColorStop(1, "#a0291b");
+    ctx.fillStyle = pegGrad;
+    ctx.beginPath(); ctx.arc(ppx, ppy, 11, 0, TAU); ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Angle arc (small)
+    ctx.strokeStyle = "rgba(212,175,55,0.6)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    // Arc from +y axis (top) going clockwise to current angle
+    ctx.arc(dcx, dcy, 24, -Math.PI / 2, -Math.PI / 2 + ang, ang < 0);
+    ctx.stroke();
+    ctx.font = "italic bold 14px 'Cormorant Garamond', Georgia";
+    ctx.fillStyle = "#d4af37";
+    // Place label at mid of arc
+    const midAng = -Math.PI / 2 + ang / 2;
+    ctx.fillText("ωt+φ", dcx + 38 * Math.cos(midAng), dcy + 38 * Math.sin(midAng));
+
+    // ====== Right side: x-t graph ======
+
+    // Graph baseline (t-axis through gyMid)
+    ctx.strokeStyle = "rgba(157,213,220,0.5)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(gxLeft, gyMid);
+    ctx.lineTo(gxRight, gyMid);
+    ctx.stroke();
+    // Arrow head right
+    ctx.fillStyle = "rgba(157,213,220,0.85)";
+    ctx.beginPath();
+    ctx.moveTo(gxRight, gyMid);
+    ctx.lineTo(gxRight - 8, gyMid - 4);
+    ctx.lineTo(gxRight - 8, gyMid + 4);
+    ctx.closePath();
+    ctx.fill();
+
+    // Y-axis (vertical at gxLeft)
+    ctx.strokeStyle = "rgba(157,213,220,0.5)";
+    ctx.beginPath();
+    ctx.moveTo(gxLeft, gyMid - gAmp - 30);
+    ctx.lineTo(gxLeft, gyMid + gAmp + 30);
+    ctx.stroke();
+    // Arrow head up
+    ctx.beginPath();
+    ctx.moveTo(gxLeft, gyMid - gAmp - 30);
+    ctx.lineTo(gxLeft - 4, gyMid - gAmp - 22);
+    ctx.lineTo(gxLeft + 4, gyMid - gAmp - 22);
+    ctx.closePath();
+    ctx.fill();
+
+    // Y-axis ticks
+    ctx.font = "italic 12px 'Cormorant Garamond', Georgia";
+    ctx.fillStyle = "rgba(157,213,220,0.9)";
+    ctx.textAlign = "right";
+    const yTicks = [
+      { y: gyMid - gAmp, label: "+A" },
+      { y: gyMid, label: "0" },
+      { y: gyMid + gAmp, label: "−A" }
+    ];
+    yTicks.forEach((t) => {
+      ctx.strokeStyle = "rgba(157,213,220,0.3)";
+      ctx.setLineDash([2, 5]);
+      ctx.beginPath();
+      ctx.moveTo(gxLeft, t.y);
+      ctx.lineTo(gxRight - 5, t.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillText(t.label, gxLeft - 8, t.y + 4);
+    });
+
+    // X-axis label
+    ctx.font = "italic 13px 'Cormorant Garamond', Georgia";
+    ctx.fillStyle = "rgba(157,213,220,0.85)";
+    ctx.textAlign = "center";
+    ctx.fillText("t", gxRight + 14, gyMid + 4);
+    ctx.fillText("x", gxLeft - 8, gyMid - gAmp - 14);
+
+    // T-axis ticks (every quarter period)
+    // Period T_visual = 2π / (baseOmega * speedMul) in seconds
+    const T_real = TAU / (baseOmega * speedMul);
+    const pxPerSec = gPeriodPx / T_real; // graph stays moving at base scale
+    // We want graph time anchored: current time t_now corresponds to right edge.
+    // Older points are to the left.
+    const t_now = elapsed * speedMul; // we use elapsed * speedMul as virtual time
+    // Show vertical reference markers for T/4 intervals
+    ctx.strokeStyle = "rgba(212,175,55,0.15)";
+    ctx.setLineDash([2, 4]);
+    for (let k = 0; k < 20; k++) {
+      const t_mark = Math.floor(t_now / (T_real / 4)) * (T_real / 4) - k * (T_real / 4);
+      const dx = (t_now - t_mark) * pxPerSec;
+      const mx = gxRight - dx;
+      if (mx < gxLeft || mx > gxRight) continue;
+      ctx.beginPath();
+      ctx.moveTo(mx, gyMid - gAmp - 5);
+      ctx.lineTo(mx, gyMid + gAmp + 5);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Plot trace
+    ctx.strokeStyle = "#9dd5dc";
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < trace.length; i++) {
+      const pt = trace[i];
+      const dx = (t_now - pt.t) * pxPerSec;
+      const px = gxRight - dx;
+      if (px < gxLeft) continue;
+      const py = gyMid - pt.x * gAmp;
+      if (!started) { ctx.moveTo(px, py); started = true; }
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Current point (where graph "meets" the y-axis at the right edge)
+    const xVal = Math.sin(ang);
+    const currentPx = gxRight;
+    const currentPy = gyMid - xVal * gAmp;
+    // Dashed horizontal connector from peg's shadow on x-axis to graph current y
+    ctx.strokeStyle = "rgba(212,175,55,0.5)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 5]);
+    ctx.beginPath();
+    ctx.moveTo(ppx, dcy);
+    ctx.lineTo(gxLeft - 6, dcy);
+    ctx.stroke();
+    // and from y-axis projection at current x level to graph's right edge
+    ctx.beginPath();
+    ctx.moveTo(gxLeft, currentPy);
+    ctx.lineTo(currentPx, currentPy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Current point dot on graph
+    const dotHalo = ctx.createRadialGradient(currentPx, currentPy, 0, currentPx, currentPy, 16);
+    dotHalo.addColorStop(0, "rgba(212,175,55,0.7)");
+    dotHalo.addColorStop(1, "rgba(212,175,55,0)");
+    ctx.fillStyle = dotHalo;
+    ctx.beginPath(); ctx.arc(currentPx, currentPy, 16, 0, TAU); ctx.fill();
+    ctx.fillStyle = "#d4af37";
+    ctx.beginPath(); ctx.arc(currentPx, currentPy, 6, 0, TAU); ctx.fill();
+
+    // Title labels for graph
+    ctx.font = "13px 'Sarabun', sans-serif";
+    ctx.fillStyle = "#d4af37";
+    ctx.textAlign = "left";
+    ctx.fillText("กราฟ  x = A sin(ωt + φ)", gxLeft, gyMid - gAmp - 38);
+
+    // Label for left-side area
+    ctx.font = "13px 'Sarabun', sans-serif";
+    ctx.fillStyle = "#9dd5dc";
+    ctx.textAlign = "left";
+    ctx.fillText("วงกลมอ้างอิง  •  reference circle", 20, dcy - R - 30);
+  }
+
+  function tick(now) {
+    const dt = Math.min(0.05, (now - lastT) / 1000);
+    lastT = now;
+    if (playing) {
+      theta += baseOmega * speedMul * dt;
+      elapsed += dt;
+      const ang = theta + phi;
+      const xVal = Math.sin(ang);
+      // Push current (t, x) into trace; we use virtual time = elapsed * speedMul for plotting
+      const tNow = elapsed * speedMul;
+      trace.push({ t: tNow, x: xVal });
+      // Limit trace size based on visible window (~3 periods worth)
+      const T_real = TAU / (baseOmega * speedMul);
+      const keepWindow = T_real * 3;
+      while (trace.length > 0 && trace[0].t < tNow - keepWindow) {
+        trace.shift();
+      }
+
+      // Update readouts
+      document.getElementById("r2-t").textContent = elapsed.toFixed(2);
+      const angDeg = ((ang * 180 / Math.PI) % 360 + 360) % 360;
+      document.getElementById("r2-phase").textContent = angDeg.toFixed(0);
+      document.getElementById("r2-x").textContent = (xVal >= 0 ? "+" : "") + xVal.toFixed(2);
+      document.getElementById("r2-cycle").textContent = (ang / TAU).toFixed(2);
+    }
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  // Controls
+  document.getElementById("btn2-play").addEventListener("click", (e) => {
+    playing = !playing;
+    e.target.textContent = playing ? "▌▌  หยุดชั่วคราว" : "▶  เล่น";
+    e.target.classList.toggle("primary", !playing);
+  });
+  document.getElementById("btn2-reset").addEventListener("click", () => {
+    theta = 0;
+    elapsed = 0;
+    trace = [];
+  });
+  document.getElementById("speed2").addEventListener("input", (e) => {
+    speedMul = parseFloat(e.target.value);
+    document.getElementById("lbl2-speed").textContent = speedMul.toFixed(1) + "×";
+  });
+  document.getElementById("phi2").addEventListener("input", (e) => {
+    phi = parseFloat(e.target.value) * Math.PI / 180;
+    document.getElementById("lbl2-phi").textContent = e.target.value + "°";
+    trace = []; // clear trace when phase changes so graph redraws cleanly
+  });
+
+  // Start
+  lastT = performance.now();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
